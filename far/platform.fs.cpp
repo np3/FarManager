@@ -1710,7 +1710,15 @@ WARNING_POP()
 			if (!IgnoreAclErrorsSupported)
 				ReplaceFlags &= ~REPLACEFILE_IGNORE_ACL_ERRORS;
 
-			return ::ReplaceFile(ReplacedFileName, ReplacementFileName, EmptyToNull(BackupFileName), ReplaceFlags, nullptr, nullptr) != FALSE;
+			for (int i = 0; i < 10; ++i)
+			{
+				if (::ReplaceFile(ReplacedFileName, ReplacementFileName, EmptyToNull(BackupFileName), ReplaceFlags, nullptr, nullptr) != FALSE)
+				{
+					return true;
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+			return false;
 		}
 
 		bool detach_virtual_disk(const wchar_t* Object, VIRTUAL_STORAGE_TYPE& VirtualStorageType)

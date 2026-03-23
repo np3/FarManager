@@ -1708,15 +1708,28 @@ WARNING_POP()
 		{
 			static bool IgnoreAclErrorsSupported = IsWindowsVistaOrGreater();
 			if (!IgnoreAclErrorsSupported)
+			{
 				ReplaceFlags &= ~REPLACEFILE_IGNORE_ACL_ERRORS;
+			}
 
-			for (int i = 0; i < 10; ++i)
+			constexpr int MaxRetries = 20;
+			for (int i = 0; i < MaxRetries; ++i)
 			{
 				if (::ReplaceFile(ReplacedFileName, ReplacementFileName, EmptyToNull(BackupFileName), ReplaceFlags, nullptr, nullptr) != FALSE)
 				{
 					return true;
 				}
-				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+				const auto Error = ::GetLastError();
+				if (Error != ERROR_SHARING_VIOLATION && Error != ERROR_LOCK_VIOLATION)
+				{
+					return false;
+				}
+
+				if (i + 1 < MaxRetries)
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				}
 			}
 			return false;
 		}

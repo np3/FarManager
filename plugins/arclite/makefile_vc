@@ -32,6 +32,14 @@ LINK_OBJS = \
 7ZDLL = 7z\$(VERSION_7Z)\dll\$(DIRBIT)\7z.dll
 !endif
 
+!ifndef 7ZDIR
+!if "$(DIRBIT)" == "64"
+7ZDIR = C:\Program Files\7-Zip
+!else
+7ZDIR = C:\Program Files (x86)\7-Zip
+!endif
+!endif
+
 DOCS = \
 	7z\$(VERSION_7Z)\sfx\*.sfx \
 	arclite.xml \
@@ -52,8 +60,11 @@ depfile:
 	dir /b *.cpp *.hpp *.rc | "$(FARDIR)\tools\gawk" -f $(FARDIR)\scripts\mkdep.awk - > $(INTDIR)\$(NAME).dep
 
 $(7ZDLL):
-	@echo Downloading 7-Zip binaries
-	powershell -c "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/FarGroup/thirdparty/master/7z-$(VERSION_7Z).zip' -OutFile '7z\7z-$(VERSION_7Z).zip'; Expand-Archive 7z\7z-$(VERSION_7Z).zip -DestinationPath 7z\$(VERSION_7Z)"
+	@echo Copying 7-Zip binaries from $(7ZDIR)
+	if not exist "7z\$(VERSION_7Z)\dll\$(DIRBIT)" mkdir "7z\$(VERSION_7Z)\dll\$(DIRBIT)"
+	if not exist "7z\$(VERSION_7Z)\sfx" mkdir "7z\$(VERSION_7Z)\sfx"
+	copy "$(7ZDIR)\7z.dll" "7z\$(VERSION_7Z)\dll\$(DIRBIT)\7z.dll"
+	copy "$(7ZDIR)\*.sfx" "7z\$(VERSION_7Z)\sfx\"
 
 
 clean:
